@@ -1,0 +1,64 @@
+<mtapp:setting
+    id="supr_enable"
+    label="<__trans phrase="Post to Twitter">"
+    hint="Display option to customize posts to Twitter or Facebook when I add a new entry"
+    show_hint="1">
+			<input name="supr_enable" type="checkbox"<mt:if name="supr_enable">checked</mt:if>></input>
+</mtapp:setting>
+
+<mtapp:setting
+    id="twitter_default"
+    label="<__trans phrase="Default Twitter setting">"
+    hint="Post to Twitter when I add a new entry"
+    show_hint="1">
+			<input name="twitter_default" type="checkbox"<mt:if name="twitter_default">checked</mt:if>></input>
+</mtapp:setting>
+
+<mtapp:setting
+    id="fb_default"
+    label="<__trans phrase="Default Facebook setting">"
+    hint="Post to Facebook when I add a new entry"
+    show_hint="1">
+			<input name="fb_default" type="checkbox"<mt:if name="fb_default">checked</mt:if>></input>
+</mtapp:setting>
+
+<mtapp:setting
+    id="supr_shorten"
+    label="<__trans phrase="My own short-urls">"
+    hint="Host short URLs on my own domain  (i.e., http://yourdomain.com/ASDF)"
+    show_hint="1">
+			<input name="supr_shorten" type="checkbox"<mt:if name="supr_shorten">checked</mt:if>></input>
+</mtapp:setting>
+
+<mtapp:setting
+    id="supr_toolbar"
+    label="<__trans phrase="StumbleUpon toolbar">"
+    hint="Get more traffic and show the StumbleUpon toolbar when visitors clicks on a short URL  (The more visitors thumb-up the more traffic you will receive)"
+    show_hint="1">
+			<input name="supr_toolbar" type="checkbox"<mt:if name="supr_toolbar">checked</mt:if>></input>
+</mtapp:setting>
+
+<mtapp:setting
+    id="supr_redirect"
+    label="<__trans phrase="Search engine friendly links">"
+    hint="Use search engine friendly short URLs (301 redirect)"
+    show_hint="1">
+			<input name="supr_redirect" type="checkbox"<mt:if name="supr_redirect">checked</mt:if>></input>
+</mtapp:setting>
+
+<mtapp:setting
+    id="supr_apikey"
+    label="<__trans phrase="Su.pr API Key">"
+    hint="Use search engine friendly short URLs (301 redirect)"
+    show_hint="1">
+			<input name="supr_apikey" type="text" value="<mt:var name="supr_apikey">"></input> Don't have one? <a href="http://su.pr/settings" target="_blank">Get one here</a>
+</mtapp:setting>
+
+<mtapp:setting
+    id="supr_username"
+    label="<__trans phrase="Your Su.pr/StumbleUpon username">"
+    hint=""
+    show_hint="1">
+			<input name="supr_username" type="text" value="<mt:var name="supr_username">"></input> <a href="http://su.pr/join" target="_blank">Create an account</a>
+</mtapp:setting>
+

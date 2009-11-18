@@ -1,0 +1,37 @@
+name: Supr
+id: Supr
+key: Supr
+author_link: http://endevver/
+author_name: Endevver, MT Hacks
+description: The Supr plugin for Movable Type enables users to easily post links to Twitter and Facebook.
+version: 0.25
+#plugin_link: http://mt-hacks.com/supr.html
+settings:
+    supr_username:
+        Scope: blog
+    supr_apikey:
+        Scope: blog
+    supr_enable:
+        Scope: blog
+    twitter_default:
+        Scope: blog
+    fb_default:
+        Scope: blog
+    supr_shorten:
+        Scope: blog
+    supr_toolbar:
+        Scope: blog
+    supr_redirect:
+        Scope: blog
+blog_config_template: blog_config_template.tmpl
+callbacks:
+    MT::Entry::pre_save: $Supr::Supr::Callbacks::entry_pre_save
+    MT::Entry::post_save: $Supr::Supr::Callbacks::entry_post_save
+    MT::App::CMS::template_param.edit_entry: $Supr::Supr::Callbacks::edit_entry_param
+object_types:
+    entry:
+        supr_url: string meta
+tags:
+    function:
+        SuprURL: $Supr::Supr::Tags::_hdlr_supr_url
+
