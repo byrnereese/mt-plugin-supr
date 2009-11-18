@@ -4,7 +4,7 @@ key: Supr
 author_link: http://endevver/
 author_name: Endevver, MT Hacks
 description: The Supr plugin for Movable Type enables users to easily post links to Twitter and Facebook.
-version: 0.25
+version: 0.9
 #plugin_link: http://mt-hacks.com/supr.html
 settings:
     supr_username:
