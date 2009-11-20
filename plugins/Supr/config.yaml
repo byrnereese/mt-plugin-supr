@@ -33,5 +33,5 @@ object_types:
         supr_url: string meta
 tags:
     function:
-        SuprURL: $Supr::Supr::Tags::_hdlr_supr_url
+        EntrySuprURL: $Supr::Supr::Tags::_hdlr_supr_url
 
