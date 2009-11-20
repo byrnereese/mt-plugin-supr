@@ -115,9 +115,18 @@ sub extract_suprurl {
 	return $url;
 }
 
+sub edit_entry_xfrm {
+    my ($cb, $app, $tmpl) = @_;
+    my $slug;
+    $slug = <<END_TMPL;
+<link rel="stylesheet" type="text/css" href="<mt:StaticWebPath>plugins/Supr/app.css" />
+END_TMPL
+$$tmpl =~ s{(<mt:setvarblock name="html_head" append="1">)}{$1 $slug}msgi;
+}
+
 sub edit_entry_param {
 	my($cb, $app, $param, $tmpl) = @_;
-	
+
     my $q = $app->param;
 	my $entry_blog_id = $q->param('blog_id');
 	my $author = $app->user;
@@ -139,17 +148,22 @@ sub edit_entry_param {
 <script type="text/javascript">
 <!-- Begin
 function countChars(field,cntfield) {
-cntfield.value = field.value.length;
+cntfield.value = 119 - field.value.length;
 }
 //  End -->
 </script>
 <textarea name="su_twitter" id="su_twitter" rows="2" cols="60"
 onKeyDown="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)"
 onKeyUp="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)"></textarea>
-	<p><input readonly type="text" name="twitlength" size="3" maxlength="3" value="0" /> characters
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="supr-this"><input type="checkbox" name="twitter-this" $twitter_checked id="twitter-this" value="1"  /> Post this on Twitter</label>&nbsp;&nbsp;<label for="fb-this"><input type="checkbox" name="fb-this" $fb_checked id="fb-this" value="1"  /> Post this on Facebook</label><br />
-	Twitter posts are a maximum of 140 characters; if your su.pr URL is appended to the end of your document, you have 119 characters available.
-</p>
+    
+	<div class="supr-controls">
+      <div class="char-counter">
+        <input readonly type="text" name="twitlength" size="3" maxlength="3" value="119" /> characters left
+      </div>
+      <label class="twitter" for="supr-this"><input type="checkbox" name="twitter-this" $twitter_checked id="twitter-this" value="1"  /> Post this on Twitter</label>
+      <label class="fb" for="fb-this"><input type="checkbox" name="fb-this" $fb_checked id="fb-this" value="1"  /> Post this on Facebook</label>
+	  <p class="help">Twitter posts are a maximum of 140 characters; if your su.pr URL is appended to the end of your document, you have 119 characters available.</p>
+    </div>
 HTML
 	$su_field->innerHTML( $innerHTML );
     $tmpl->insertAfter($su_field, $kw_field)
