@@ -56,14 +56,22 @@ return unless ($entry->title =~ /supr/);												# REMOVE THIS LINE !!!!!!!!!
 		my $ts = sprintf "%04d%02d%02d%02d%02d%02d", $1, $2, $3, $4, $5, $s;
 		$entry->authored_on($ts);
 	}
+	my $tweet_text;
+    my $twitter_this;
+    my $fb_this;
+    
+    my $app = MT->app;
+    if ($app->can('param')) {
+        my $q = $app->param;
+        $tweet_text = remove_html($q->param('su_twitter')) if $q->param('su_twitter');
+        $twitter_this = $q->param('twitter-this') if $q->param('twitter-this');
+        $fb_this = $q->param('fb-this') if $q->param('fb-this');
+    }
 
 	my $field = 'title';
-	my $tweet_text;
-	if (0) {
-		# handle case for tweet field here
-	} else {
-		$tweet_text = remove_html($entry->$field);
-	}
+
+	$tweet_text = remove_html($entry->$field) unless $tweet_text;
+
 	return if !$tweet_text;
 
 	my $tweet = $tweet_text; 
@@ -73,8 +81,8 @@ return unless ($entry->title =~ /supr/);												# REMOVE THIS LINE !!!!!!!!!
 	require WWW::Shorten::Supr;
 	my $supr = WWW::Shorten::Supr->new(USER => $supr_username, APIKEY => $supr_apikey);
 	my @services;
-	push @services, 'twitter' if ($config->{twitter_default});   								#TODO add UI case if twitter_this
-	push @services, 'facebook' if ($config->{fb_default});   								#TODO add UI case if fb_this
+	push @services, 'twitter' if ($twitter_this); 
+	push @services, 'facebook' if ($fb_this);
 	my $suprurl;
 	if (@services) {
 		# one more services was requested so use 'post' API method
@@ -106,5 +114,48 @@ sub extract_suprurl {
     }
 	return $url;
 }
+
+sub edit_entry_param {
+	my($cb, $app, $param, $tmpl) = @_;
+	
+    my $q = $app->param;
+	my $entry_blog_id = $q->param('blog_id');
+	my $author = $app->user;
+	my $plugin = MT->component('Supr');
+    my $config = $plugin->get_config_hash('blog:'.$entry_blog_id);
+	return if !$config->{supr_enable};
+	
+	my $twitter_checked = "checked" if $config->{twitter_default};
+	my $fb_checked = "checked" if $config->{fb_default};
+
+    my $kw_field = $tmpl->getElementById('keywords')
+        or return $app->error('cannot get the keywords block');
+    my $su_field = $tmpl->createElement('app:setting', {
+        id => 'su_twitter',
+        label => $app->translate('Post on Twitter & Facebook with Su.pr'),  })
+        or return $app->error('cannot create the su_twitter element');
+## TODO: re-style the HTML below to match MT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	my $innerHTML = <<HTML;
+<script type="text/javascript">
+<!-- Begin
+function countChars(field,cntfield) {
+cntfield.value = field.value.length;
+}
+//  End -->
+</script>
+<textarea name="su_twitter" id="su_twitter" rows="2" cols="60"
+onKeyDown="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)"
+onKeyUp="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)"></textarea>
+	<p><input readonly type="text" name="twitlength" size="3" maxlength="3" value="0" /> characters
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="supr-this"><input type="checkbox" name="twitter-this" $twitter_checked id="twitter-this" value="1"  /> Post this on Twitter</label>&nbsp;&nbsp;<label for="fb-this"><input type="checkbox" name="fb-this" $fb_checked id="fb-this" value="1"  /> Post this on Facebook</label><br />
+	Twitter posts are a maximum of 140 characters; if your su.pr URL is appended to the end of your document, you have 119 characters available.
+</p>
+HTML
+	$su_field->innerHTML( $innerHTML );
+    $tmpl->insertAfter($su_field, $kw_field)
+        or return $app->error('failed to insertAfter.');
+	$param;
+}
+
 
 1;
