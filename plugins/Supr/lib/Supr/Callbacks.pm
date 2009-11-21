@@ -29,7 +29,7 @@ sub entry_pre_save {
 	}
 	
 	if ($supr_it) {
-MT->log($entry->title . " just published and should be supred");
+        MT->log({ blog_id => $entry->blog_id, message => $entry->title . " just published and should be supred" });
 		$entry->{supr_it} = 'yes';
 	}
 
@@ -48,8 +48,6 @@ sub entry_post_save {
 	my $supr_apikey = $config->{supr_apikey};
 	return unless ($supr_username && $supr_apikey);
 	
-return unless ($entry->title =~ /supr/);												# REMOVE THIS LINE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 	if ( $entry->authored_on =~
               m!(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?! ) {
 		my $s = $6 || 0;
@@ -92,11 +90,11 @@ return unless ($entry->title =~ /supr/);												# REMOVE THIS LINE !!!!!!!!!
 		# no posting requested, but get su.pr url using 'shorten' API method
 		$suprurl = $supr->shorten( URL => $url );
 	}
-use Data::Dumper;
-MT->log("services is:" . Dumper(\@services));
-MT->log("supr is:" . Dumper($supr));
-#MT->log("suprmsg is:" . Dumper($suprmsg));
-MT->log("suprurl is $suprurl");
+#    use Data::Dumper;
+#    MT->log("services is:" . Dumper(\@services));
+#    MT->log("supr is:" . Dumper($supr));
+#    MT->log("suprmsg is:" . Dumper($suprmsg));
+#    MT->log("suprurl is $suprurl");
 	if ($suprurl) {
 		$entry->supr_url($suprurl);
 		$entry->save;
@@ -143,7 +141,6 @@ sub edit_entry_param {
         id => 'su_twitter',
         label => $app->translate('Post on Twitter & Facebook with Su.pr'),  })
         or return $app->error('cannot create the su_twitter element');
-## TODO: re-style the HTML below to match MT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	my $innerHTML = <<HTML;
 <script type="text/javascript">
 <!-- Begin
