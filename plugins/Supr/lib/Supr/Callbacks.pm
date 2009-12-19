@@ -97,6 +97,7 @@ sub entry_post_save {
 #    MT->log("suprurl is $suprurl");
 	if ($suprurl) {
 		$entry->supr_url($suprurl);
+        $entry->supr_text($tweet);
 		$entry->save;
 	}
 	$entry->{supred} = 1;
@@ -131,9 +132,13 @@ sub edit_entry_param {
 	my $plugin = MT->component('Supr');
     my $config = $plugin->get_config_hash('blog:'.$entry_blog_id);
 	return if !$config->{supr_enable};
-	
+
+	my $ctx = $tmpl->context;
+    my $entry = $ctx->stash('entry');
 	my $twitter_checked = "checked" if $config->{twitter_default};
 	my $fb_checked = "checked" if $config->{fb_default};
+    my $supr_text = ($entry ? $entry->meta('supr_text') : '');
+    my $supr_dis = ($supr_text ne '' ? 'disabled' : '');
 
     my $kw_field = $tmpl->getElementById('keywords')
         or return $app->error('cannot get the keywords block');
@@ -149,9 +154,9 @@ cntfield.value = 119 - field.value.length;
 }
 //  End -->
 </script>
-<textarea name="su_twitter" id="su_twitter" rows="2" cols="60"
+<textarea name="su_twitter" id="su_twitter" rows="2" cols="60" $supr_dis
 onKeyDown="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)"
-onKeyUp="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)"></textarea>
+onKeyUp="countChars(document.entry_form.su_twitter,document.entry_form.twitlength)">$supr_text</textarea>
     
 	<div class="supr-controls">
       <div class="char-counter">
