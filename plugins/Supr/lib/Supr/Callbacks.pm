@@ -37,11 +37,8 @@ sub entry_pre_save {
 
 sub entry_post_save {
     my ($cb, $entry, $entry_orig) = @_;
-    MT->log("supr url is: " . $entry->supr_url);
     return if $entry->supr_url;   # alreaded supred
-    
     return unless $entry->{supr_it};
-    MT->log("Let's get this supred.");
     my $entry_id = $entry->id;
     my $plugin = MT->component('Supr');
     my $config = $plugin->get_config_hash('blog:'.$entry->blog_id);
