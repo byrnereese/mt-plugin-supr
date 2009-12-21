@@ -100,6 +100,7 @@ sub new {
     $supr->{json} = JSON::Any->new;
     $supr->{browser} = LWP::UserAgent->new(agent => $args{source});
     $supr->{xml} = new XML::Simple(SuppressEmpty => 1);
+    $supr->{is_error} = 0;
     my ($self) = $supr;
     bless $self, $class;
 }
@@ -183,7 +184,6 @@ print "supurl is $shortstuff\n";
 
 =cut
 
-
 sub shorten {
     my $self = shift;
     my %args = @_;
@@ -197,10 +197,15 @@ sub shorten {
         'login' => $self->{USER},
         'apiKey' => $self->{APIKEY},
     ]);
+    my $response_obj = $self->{json}->jsonToObj($self->{response}->content);
     $self->{response}->is_success || die 'Failed to get su.pr link: ' . $self->{response}->status_line;
-    return undef if ( $self->{json}->jsonToObj($self->{response}->{_content})->{errorCode} != 0 );
-    $self->{suprurl} = $self->{json}->jsonToObj($self->{response}->{_content})->{results}->{$args{URL}}->{shortUrl};
-    return $self->{suprurl} if ( $self->{json}->jsonToObj($self->{response}->{_content})->{errorCode} == 0 );
+    if ( $response_obj->{statusCode} eq 'ERROR' ) {
+	$self->{is_error} = 1;
+	$self->{error_message} = $response_obj->{errorMessage};
+	return undef;
+    }
+    $self->{suprurl} = $response_obj->{results}->{$args{URL}}->{shortUrl};
+    return $self->{suprurl} if ( $response_obj->{errorCode} == 0 );
 }
 
 =head2 expand
@@ -222,12 +227,38 @@ sub expand {
         'login' => $self->{USER},
         'apiKey' => $self->{APIKEY},
     ]);
+    my $response_obj = $self->{json}->jsonToObj($self->{response}->content);
     $self->{response}->is_success || die 'Failed to get su.pr link: ' . $self->{response}->status_line;
-    return undef if ( $self->{json}->jsonToObj($self->{response}->{_content})->{errorCode} != 0 );
-    $self->{longurl} = $self->{json}->jsonToObj($self->{response}->{_content})->{results}->{$foo[3]}->{longUrl};
-    return $self->{longurl} if ( $self->{json}->jsonToObj($self->{response}->{_content})->{errorCode} == 0 );
+    if ( $response_obj->{statusCode} eq 'ERROR' ) {
+	$self->{is_error} = 1;
+	$self->{error_message} = $response_obj->{errorMessage};
+	return undef;
+    }
+    $self->{longurl} = $response_obj->{results}->{$foo[3]}->{longUrl};
+    return $self->{longurl} if ( $response_obj->{errorCode} == 0 );
 }
 
+=head2 error_message 
+
+Returns the error message that came back from Su.pr
+
+=cut
+
+sub error_message {
+    my $self = shift;
+    return $self->{error_message};
+}
+
+=head2 is_error
+
+Returns true if the request to shorten a URL failed.
+
+=cut
+
+sub is_error {
+    my $self = shift;
+    return $self->{is_error};
+}
 
 =head2 post
 
@@ -256,10 +287,15 @@ sub post {
         'apiKey' => $self->{APIKEY},
 		$args{services} ? ( 'services[]' => $args{services} ) : (),
     ]);
+    my $response_obj = $self->{json}->jsonToObj($self->{response}->content);
     $self->{response}->is_success || die 'Failed to get su.pr msg: ' . $self->{response}->status_line;
-    return undef if ( $self->{json}->jsonToObj($self->{response}->{_content})->{errorCode} != 0 );
-    $self->{suprmsg} = $self->{json}->jsonToObj($self->{response}->{_content})->{results}->{shortMsg};
-    return $self->{suprmsg} if ( $self->{json}->jsonToObj($self->{response}->{_content})->{errorCode} == 0 );
+    if ( $response_obj->{statusCode} eq 'ERROR' ) {
+	$self->{is_error} = 1;
+	$self->{error_message} = $response_obj->{errorMessage};
+	return undef;
+    }
+    $self->{suprmsg} = $response_obj->{results}->{shortMsg};
+    return $self->{suprmsg} if ( $response_obj->{errorCode} == 0 );
 }
 
 =head2 version
