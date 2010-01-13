@@ -28,7 +28,7 @@ use strict;
 use warnings;
 
 use base qw( WWW::Shorten::generic Exporter );
-our @EXPORT = qw(makeashorterlink makealongerlink);
+our @EXPORT  = qw(makeashorterlink makealongerlink);
 our $VERSION = '1.91';
 
 use Carp;
@@ -42,15 +42,14 @@ your long URL and will return the shorter Metamark version.
 
 =cut
 
-sub makeashorterlink ($)
-{
+sub makeashorterlink ($) {
     my $url = shift or croak 'No URL passed to makeashorterlink';
     my $ua = __PACKAGE__->ua();
-    my $resp  = $ua->post( 'http://metamark.net/api/rest/simple', [
-        long_url => $url,
-    ] );
+    my $resp =
+      $ua->post( 'http://metamark.net/api/rest/simple', [ long_url => $url, ] );
     return unless $resp->is_success;
     return if $resp->content =~ /^ERROR:/;
+
     # I love REST. It's so simple when done properly.
     return $resp->content;
 }
@@ -65,17 +64,16 @@ If anything goes wrong, then either function will return C<undef>.
 
 =cut
 
-sub makealongerlink ($)
-{
-    my $short_url = shift 
-	or croak 'No Metamark key / URL passed to makealongerlink';
+sub makealongerlink ($) {
+    my $short_url = shift
+      or croak 'No Metamark key / URL passed to makealongerlink';
     my $ua = __PACKAGE__->ua();
 
-    my $resp  = $ua->post( 'http://metamark.net/api/rest/simple', [
-        short_url => $short_url,
-    ] );
+    my $resp = $ua->post( 'http://metamark.net/api/rest/simple',
+        [ short_url => $short_url, ] );
     return unless $resp->is_success;
     return if $resp->content =~ /^ERROR:/;
+
     # I love REST. It's so simple when done properly.
     return $resp->content;
 }

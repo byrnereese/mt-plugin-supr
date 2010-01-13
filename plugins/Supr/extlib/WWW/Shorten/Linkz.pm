@@ -28,7 +28,7 @@ use strict;
 use warnings;
 
 use base qw( WWW::Shorten::generic Exporter );
-our @EXPORT = qw(makeashorterlink makealongerlink);
+our @EXPORT  = qw(makeashorterlink makealongerlink);
 our $VERSION = '1.90';
 
 use Carp;
@@ -51,19 +51,18 @@ being returned.
 
 =cut
 
-sub makeashorterlink ($)
-{
-    my $url = shift or croak 'No URL passed to makeashorterlink';
-    my $ua = __PACKAGE__->ua();
-    my $resp = $ua->post( 'http://lin.kz/make.php', [
-        url => $url,
-        ],
-    );
+sub makeashorterlink ($) {
+    my $url  = shift or croak 'No URL passed to makeashorterlink';
+    my $ua   = __PACKAGE__->ua();
+    my $resp = $ua->post( 'http://lin.kz/make.php', [ url => $url, ], );
     return unless $resp->is_success;
-    if ($resp->content =~ m!
+    if (
+        $resp->content =~ m!
         \Q<a href="\E(\Qhttp://lin.kz/?\E\w+)"
-	!x) {
-	return $1;
+	!x
+      )
+    {
+        return $1;
     }
     return;
 }
@@ -78,14 +77,13 @@ If anything goes wrong, then either function will return C<undef>.
 
 =cut
 
-sub makealongerlink ($)
-{
+sub makealongerlink ($) {
     my $code = shift
-	or croak 'No Linkz nickname/URL passed to makealongerlink';
+      or croak 'No Linkz nickname/URL passed to makealongerlink';
     my $ua = __PACKAGE__->ua();
     $code = "http://lin.kz/?$code" unless $code =~ m!^http://!i;
 
-    my $resp = $ua->get($code);
+    my $resp     = $ua->get($code);
     my $location = $resp->header('Location');
     return $location if defined $location;
     return;

@@ -4,151 +4,177 @@ use strict;
 use MT::Util qw ( trim remove_html );
 
 sub entry_pre_save {
-    my ($cb, $entry, $entry_orig) = @_;
-    return if $entry->supr_url;   # alreaded supred
-    my $plugin = MT->component('Supr');
-    my $config = $plugin->get_config_hash('blog:'.$entry->blog_id);
+    my ( $cb, $entry, $entry_orig ) = @_;
+    return if $entry->supr_url;    # alreaded supred
+    my $plugin  = MT->component('Supr');
+    my $config  = $plugin->get_config_hash( 'blog:' . $entry->blog_id );
     my $enabled = $config->{supr_enable};
     return if !$enabled;
     my $entry_id = $entry->id;
-    my $supr_it = 1;
-    
-    if ($entry->status == 2) {
-	if (!$entry_id) {
-	    $supr_it = 1;   # new entry with published status
-	} else {
-	    # entry was previously saved in db -- now determine if it status has just been changed to published
-	    $entry->clear_cache();
-	    $entry->uncache_object();
-	    $entry_orig = MT->model('entry')->load($entry_id);
-	    if ($entry_orig->status != 2) {
-		# now we know status has just been changed to published and we have no status_id on record - so supr it
-		$supr_it = 1;
-	    }
-	}
+    my $supr_it  = 1;
+
+    if ( $entry->status == 2 ) {
+        if ( !$entry_id ) {
+            $supr_it = 1;          # new entry with published status
+        }
+        else {
+
+# entry was previously saved in db -- now determine if it status has just been changed to published
+            $entry->clear_cache();
+            $entry->uncache_object();
+            $entry_orig = MT->model('entry')->load($entry_id);
+            if ( $entry_orig->status != 2 ) {
+
+# now we know status has just been changed to published and we have no status_id on record - so supr it
+                $supr_it = 1;
+            }
+        }
     }
-    
+
     if ($supr_it) {
-	MT->log({ blog_id => $entry->blog_id, message => $entry->title . " just published and should be supred" });
-	$entry->{supr_it} = 'yes';
+        MT->log(
+            {
+                blog_id => $entry->blog_id,
+                message => $entry->title
+                  . " just published and should be supred"
+            }
+        );
+        $entry->{supr_it} = 'yes';
     }
     return 1;
 }
 
 sub entry_post_save {
-    my ($cb, $entry, $entry_orig) = @_;
-    return if $entry->supr_url;   # alreaded supred
+    my ( $cb, $entry, $entry_orig ) = @_;
+    return if $entry->supr_url;    # alreaded supred
     return unless $entry->{supr_it};
     my $entry_id = $entry->id;
-    my $plugin = MT->component('Supr');
-    my $config = $plugin->get_config_hash('blog:'.$entry->blog_id);
-    my $enabled = $config->{supr_enable};
+    my $plugin   = MT->component('Supr');
+    my $config   = $plugin->get_config_hash( 'blog:' . $entry->blog_id );
+    my $enabled  = $config->{supr_enable};
     return if !$enabled;
     my $supr_username = $config->{supr_username};
-    my $supr_apikey = $config->{supr_apikey};
-    return unless ($supr_username && $supr_apikey);
-    
+    my $supr_apikey   = $config->{supr_apikey};
+    return unless ( $supr_username && $supr_apikey );
+
     if ( $entry->authored_on =~
-	 m!(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?! ) {
-	my $s = $6 || 0;
-	my $ts = sprintf "%04d%02d%02d%02d%02d%02d", $1, $2, $3, $4, $5, $s;
-	$entry->authored_on($ts);
+        m!(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})(?::(\d{2}))?! )
+    {
+        my $s = $6 || 0;
+        my $ts = sprintf "%04d%02d%02d%02d%02d%02d", $1, $2, $3, $4, $5, $s;
+        $entry->authored_on($ts);
     }
     my $tweet_text;
     my $twitter_this;
     my $fb_this;
-    
+
     my $app = MT->app;
-    if ($app->can('param')) {
-	my $q = $app->param;
-	$tweet_text = remove_html($q->param('su_twitter')) if $q->param('su_twitter');
-	$twitter_this = $q->param('twitter-this') if $q->param('twitter-this');
-	$fb_this = $q->param('fb-this') if $q->param('fb-this');
+    if ( $app->can('param') ) {
+        my $q = $app->param;
+        $tweet_text = remove_html( $q->param('su_twitter') )
+          if $q->param('su_twitter');
+        $twitter_this = $q->param('twitter-this') if $q->param('twitter-this');
+        $fb_this      = $q->param('fb-this')      if $q->param('fb-this');
     }
-    
+
     my $field = 'title';
-    
-    $tweet_text = remove_html($entry->$field) unless $tweet_text;
-    
+
+    $tweet_text = remove_html( $entry->$field ) unless $tweet_text;
+
     return if !$tweet_text;
-    
-    my $tweet = $tweet_text; 
-    my $url = $entry->permalink;
+
+    my $tweet = $tweet_text;
+    my $url   = $entry->permalink;
     $tweet .= ' ' . $url;
-    
+
     require WWW::Shorten::Supr;
-    my $supr = WWW::Shorten::Supr->new(USER => $supr_username, APIKEY => $supr_apikey);
+    my $supr =
+      WWW::Shorten::Supr->new( USER => $supr_username, APIKEY => $supr_apikey );
     my @services;
-    push @services, 'twitter' if ($twitter_this); 
+    push @services, 'twitter'  if ($twitter_this);
     push @services, 'facebook' if ($fb_this);
     my $suprurl;
     my $suprmsg;
+
     if (@services) {
-	# one more services was requested so use 'post' API method
-	$suprmsg = $supr->post( msg => $tweet, services => \@services );
-	$suprurl = extract_suprurl($suprmsg);
-    } else {
-	# no posting requested, but get su.pr url using 'shorten' API method
-	$suprurl = $supr->shorten( URL => $url );
+
+        # one more services was requested so use 'post' API method
+        $suprmsg = $supr->post( msg => $tweet, services => \@services );
+        $suprurl = extract_suprurl($suprmsg);
     }
-    if ($supr->is_error) {
-	MT->log({ blog_id => $entry->blog_id, message => "There was an error shortening '".$entry->title."': " . $supr->error_message });
-	$entry->{supred} = 0;
-	return 1;
+    else {
+
+        # no posting requested, but get su.pr url using 'shorten' API method
+        $suprurl = $supr->shorten( URL => $url );
     }
-   
+    if ( $supr->is_error ) {
+        MT->log(
+            {
+                blog_id => $entry->blog_id,
+                message => "There was an error shortening '"
+                  . $entry->title . "': "
+                  . $supr->error_message
+            }
+        );
+        $entry->{supred} = 0;
+        return 1;
+    }
+
     if ($suprurl) {
-	$entry->supr_url($suprurl);
-	$entry->supr_text($tweet);
-	$entry->save;
+        $entry->supr_url($suprurl);
+        $entry->supr_text($tweet);
+        $entry->save;
     }
     $entry->{supred} = 1;
-    
+
     return 1;
 }
 
 sub extract_suprurl {
-	my ($str) = @_;
-	my $url;
-    if ($str =~ m!(https?://[^\s<]+)!s) {
-	    $url = $1;
+    my ($str) = @_;
+    my $url;
+    if ( $str =~ m!(https?://[^\s<]+)!s ) {
+        $url = $1;
     }
-	return $url;
+    return $url;
 }
 
 sub edit_entry_xfrm {
-    my ($cb, $app, $tmpl) = @_;
+    my ( $cb, $app, $tmpl ) = @_;
     my $slug;
     $slug = <<END_TMPL;
 <link rel="stylesheet" type="text/css" href="<mt:StaticWebPath>plugins/Supr/app.css" />
 END_TMPL
-$$tmpl =~ s{(<mt:setvarblock name="html_head" append="1">)}{$1 $slug}msgi;
+    $$tmpl =~ s{(<mt:setvarblock name="html_head" append="1">)}{$1 $slug}msgi;
 }
 
 sub edit_entry_param {
-	my($cb, $app, $param, $tmpl) = @_;
+    my ( $cb, $app, $param, $tmpl ) = @_;
 
-    my $q = $app->param;
-	my $entry_blog_id = $q->param('blog_id');
-	my $author = $app->user;
-	my $plugin = MT->component('Supr');
-    my $config = $plugin->get_config_hash('blog:'.$entry_blog_id);
-	return if !$config->{supr_enable};
+    my $q             = $app->param;
+    my $entry_blog_id = $q->param('blog_id');
+    my $author        = $app->user;
+    my $plugin        = MT->component('Supr');
+    my $config        = $plugin->get_config_hash( 'blog:' . $entry_blog_id );
+    return if !$config->{supr_enable};
 
-	my $ctx = $tmpl->context;
-    my $entry = $ctx->stash('entry');
-	my $twitter_checked = "checked" if $config->{twitter_default};
-	my $fb_checked = "checked" if $config->{fb_default};
-    my $supr_text = ($entry ? $entry->meta('supr_text') : '');
-    my $supr_dis = ($supr_text ne '' ? 'disabled' : '');
+    my $ctx             = $tmpl->context;
+    my $entry           = $ctx->stash('entry');
+    my $twitter_checked = "checked" if $config->{twitter_default};
+    my $fb_checked      = "checked" if $config->{fb_default};
+    my $supr_text       = ( $entry ? $entry->meta('supr_text') : '' );
+    my $supr_dis        = ( $supr_text ne '' ? 'disabled' : '' );
 
     my $kw_field = $tmpl->getElementById('keywords')
-        or return $app->error('cannot get the keywords block');
-    my $su_field = $tmpl->createElement('app:setting', {
-        id => 'su_twitter',
-        label => $app->translate('Post on Twitter & Facebook with Su.pr'),  })
-        or return $app->error('cannot create the su_twitter element');
-	my $innerHTML = <<HTML;
+      or return $app->error('cannot get the keywords block');
+    my $su_field = $tmpl->createElement(
+        'app:setting',
+        {
+            id    => 'su_twitter',
+            label => $app->translate('Post on Twitter & Facebook with Su.pr'),
+        }
+    ) or return $app->error('cannot create the su_twitter element');
+    my $innerHTML = <<HTML;
 <script type="text/javascript">
 <!-- Begin
 function countChars(field,cntfield) {
@@ -169,11 +195,10 @@ onKeyUp="countChars(document.entry_form.su_twitter,document.entry_form.twitlengt
 	  <p class="help">Twitter posts are a maximum of 140 characters; if your su.pr URL is appended to the end of your document, you have 119 characters available.</p>
     </div>
 HTML
-	$su_field->innerHTML( $innerHTML );
-    $tmpl->insertAfter($su_field, $kw_field)
-        or return $app->error('failed to insertAfter.');
-	$param;
+    $su_field->innerHTML($innerHTML);
+    $tmpl->insertAfter( $su_field, $kw_field )
+      or return $app->error('failed to insertAfter.');
+    $param;
 }
-
 
 1;

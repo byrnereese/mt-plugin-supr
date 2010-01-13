@@ -27,7 +27,7 @@ use strict;
 use warnings;
 
 use base qw( WWW::Shorten::generic Exporter );
-our @EXPORT = qw( makeashorterlink makealongerlink );
+our @EXPORT  = qw( makeashorterlink makealongerlink );
 our $VERSION = '1.90';
 
 use Carp;
@@ -41,20 +41,22 @@ it your long URL and will return the shorter TinyURL version.
 
 =cut
 
-sub makeashorterlink ($)
-{
-    my $url = shift or croak 'No URL passed to makeashorterlink';
-    my $ua = __PACKAGE__->ua();
+sub makeashorterlink ($) {
+    my $url     = shift or croak 'No URL passed to makeashorterlink';
+    my $ua      = __PACKAGE__->ua();
     my $tinyurl = 'http://tinyurl.com/api-create.php';
-    my $resp = $ua->post($tinyurl, [
-	url => $url,
-	source => "PerlAPI-$VERSION",
-	]);
+    my $resp    = $ua->post(
+        $tinyurl,
+        [
+            url    => $url,
+            source => "PerlAPI-$VERSION",
+        ]
+    );
     return undef unless $resp->is_success;
     my $content = $resp->content;
     return undef if $content =~ /Error/;
-    if ($resp->content =~ m!(\Qhttp://tinyurl.com/\E\w+)!x) {
-	return $1;
+    if ( $resp->content =~ m!(\Qhttp://tinyurl.com/\E\w+)!x ) {
+        return $1;
     }
     return;
 }
@@ -69,14 +71,13 @@ If anything goes wrong, then either function will return C<undef>.
 
 =cut
 
-sub makealongerlink ($)
-{
-    my $tinyurl_url = shift 
-	or croak 'No TinyURL key / URL passed to makealongerlink';
+sub makealongerlink ($) {
+    my $tinyurl_url = shift
+      or croak 'No TinyURL key / URL passed to makealongerlink';
     my $ua = __PACKAGE__->ua();
 
     $tinyurl_url = "http://tinyurl.com/$tinyurl_url"
-    unless $tinyurl_url =~ m!^http://!i;
+      unless $tinyurl_url =~ m!^http://!i;
 
     my $resp = $ua->get($tinyurl_url);
 

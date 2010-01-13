@@ -57,7 +57,7 @@ use strict;
 use warnings;
 
 use base qw(WWW::Shorten::generic);
-our @EXPORT = qw(makeashorterlink makealongerlink);
+our @EXPORT  = qw(makeashorterlink makealongerlink);
 our $VERSION = '3.00';
 
 our $DEFAULT_SERVICE = 'Metamark';
@@ -80,12 +80,12 @@ sub import {
     $style = $DEFAULT_SERVICE unless defined $style;
     my $package = "${class}::${style}";
     eval {
-	my $file = $package;
-	$file =~ s/::/\//g;
-	require "$file.pm";
+        my $file = $package;
+        $file =~ s/::/\//g;
+        require "$file.pm";
     };
     croak $@ if $@;
-    $package->import( @_ );
+    $package->import(@_);
 }
 
 1;

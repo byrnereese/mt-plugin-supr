@@ -1,7 +1,7 @@
 # $Id: Supr.pm 110 2009-03-22 21:04:27Z mthacks $
 # $Author: mthacks $
 # $Date: 2009-11-09 02:34:27 +0530 (Mon, 23 Mar 2009) $
-# Author: 
+# Author:
 ################################################################################################################################
 package WWW::Shorten::Supr;
 
@@ -16,14 +16,13 @@ use JSON::Any;
 require XML::Simple;
 require Exporter;
 
-our %EXPORT_TAGS = ( 'all' => [ qw() ] );
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-our @EXPORT = qw(new version);
+our %EXPORT_TAGS = ( 'all' => [qw()] );
+our @EXPORT_OK   = ( @{ $EXPORT_TAGS{'all'} } );
+our @EXPORT      = qw(new version);
 
 my @ISA = qw(Exporter);
 
 use vars qw( @ISA @EXPORT );
-
 
 =head1 NAME
 
@@ -36,12 +35,11 @@ $Revision: 0.50 $
 =cut
 
 BEGIN {
-    our $VERSION = do { my @r = (q$Revision: 0.50 $ =~ /\d+/g); sprintf "%1d."."%02d" x $#r, @r }; # must be all one line, for MakeMaker
+    our $VERSION = do { my @r = ( q$Revision: 0.50 $ =~ /\d+/g ); sprintf "%1d." . "%02d" x $#r, @r }; # must be all one line, for MakeMaker
     $WWW::Shorten::Supr::VERBOSITY = 2;
 }
 
 # ------------------------------------------------------------
-
 
 =head1 SYNOPSIS
 
@@ -88,23 +86,22 @@ APIKEY => "supr_api_key");
 sub new {
     my ($class) = shift;
     my %args = @_;
-	$args{source} = 'perlsuprmod';
-    if (!defined $args{USER} || !defined $args{APIKEY}) {
+    $args{source} = 'perlsuprmod';
+    if ( !defined $args{USER} || !defined $args{APIKEY} ) {
         carp("USER and APIKEY are both required parameters.\n");
         return -1;
     }
     my $supr;
-    $supr->{USER} = $args{USER};
-    $supr->{APIKEY} = $args{APIKEY};
-    $supr->{BASE} = "http://su.pr/api";
-    $supr->{json} = JSON::Any->new;
-    $supr->{browser} = LWP::UserAgent->new(agent => $args{source});
-    $supr->{xml} = new XML::Simple(SuppressEmpty => 1);
+    $supr->{USER}     = $args{USER};
+    $supr->{APIKEY}   = $args{APIKEY};
+    $supr->{BASE}     = "http://su.pr/api";
+    $supr->{json}     = JSON::Any->new;
+    $supr->{browser}  = LWP::UserAgent->new( agent => $args{source} );
+    $supr->{xml}      = new XML::Simple( SuppressEmpty => 1 );
     $supr->{is_error} = 0;
     my ($self) = $supr;
     bless $self, $class;
 }
-
 
 =head2 makeashorterlink
 
@@ -113,10 +110,12 @@ your long URL and will return the shorter su.pr version.
 
 =cut
 
-sub makeashorterlink #($;%)
+sub makeashorterlink    #($;%)
 {
     my $url = shift or croak('No URL passed to makeashorterlink');
-    my ($user, $apikey) = @_; # or croak('No username or apikey passed to makeshorterlink');
+    my ( $user, $apikey ) =
+      @_;    # or croak('No username or apikey passed to makeshorterlink');
+
 #    if (!defined $url || !defined $user || !defined $apikey ) {
 #        croak("url, user and apikey are required for shortening a URL with su.pr - in that specific order");
 #        &help();
@@ -124,16 +123,22 @@ sub makeashorterlink #($;%)
     my $ua = __PACKAGE__->ua();
     my $supr;
     $supr->{json} = JSON::Any->new;
-    $supr->{xml} = new XML::Simple(SuppressEmpty => 1);
+    $supr->{xml} = new XML::Simple( SuppressEmpty => 1 );
     my $supurl = "http://su.pr/api/shorten";
-    $supr->{response} = $ua->post($supurl, [
-        'version' => '1.0',
-        'longUrl' => $url,
-        'login' => $user,
-        'apiKey' => $apikey,
-    ]);
-    $supr->{response}->is_success || die 'Failed to get su.pr link: ' . $supr->{response}->status_line;
-    $supr->{suprurl} = $supr->{json}->jsonToObj($supr->{response}->{_content})->{results}->{$url}->{shortUrl};
+    $supr->{response} = $ua->post(
+        $supurl,
+        [
+            'version' => '1.0',
+            'longUrl' => $url,
+            'login'   => $user,
+            'apiKey'  => $apikey,
+        ]
+    );
+    $supr->{response}->is_success
+      || die 'Failed to get su.pr link: ' . $supr->{response}->status_line;
+    $supr->{suprurl} =
+      $supr->{json}->jsonToObj( $supr->{response}->{_content} )->{results}
+      ->{$url}->{shortUrl};
     return unless $supr->{response}->is_success;
     return $supr->{suprurl};
 }
@@ -148,26 +153,35 @@ If anything goes wrong, then the function will return C<undef>.
 
 =cut
 
-sub makealongerlink #($,%)
+sub makealongerlink    #($,%)
 {
-    my $url = shift or croak('No shortened su.pr URL passed to makealongerlink');
-    my ($user, $apikey) = @_; # or croak('No username or apikey passed to makealongerlink');
+    my $url = shift
+      or croak('No shortened su.pr URL passed to makealongerlink');
+    my ( $user, $apikey ) =
+      @_;    # or croak('No username or apikey passed to makealongerlink');
     my $ua = __PACKAGE__->ua();
     my $supr;
-    my @foo = split(/\//, $url);
-    $supr->{json} = JSON::Any->new;
-    $supr->{xml} = new XML::Simple(SuppressEmpty => 1);
-    $supr->{response} = $ua->post('http://su.pr/api/expand', [
-        'version' => '1.0',
-        'shortUrl' => $url,
-        'login' => $user,
-        'apiKey' => $apikey,
-    ]);
-    $supr->{response}->is_success || die 'Failed to get su.pr link: ' . $supr->{response}->status_line;
-    $supr->{longurl} = $supr->{json}->jsonToObj($supr->{response}->{_content})->{results}->{$foo[3]}->{longUrl};
+    my @foo = split( /\//, $url );
+    $supr->{json}     = JSON::Any->new;
+    $supr->{xml}      = new XML::Simple( SuppressEmpty => 1 );
+    $supr->{response} = $ua->post(
+        'http://su.pr/api/expand',
+        [
+            'version'  => '1.0',
+            'shortUrl' => $url,
+            'login'    => $user,
+            'apiKey'   => $apikey,
+        ]
+    );
+    $supr->{response}->is_success
+      || die 'Failed to get su.pr link: ' . $supr->{response}->status_line;
+    $supr->{longurl} =
+      $supr->{json}->jsonToObj( $supr->{response}->{_content} )->{results}
+      ->{ $foo[3] }->{longUrl};
     return undef unless $supr->{response}->is_success;
     my $content = $supr->{response}->content;
-# return undef if $content eq 'ERROR';
+
+    # return undef if $content eq 'ERROR';
     return $supr->{longurl};
 }
 
@@ -187,24 +201,28 @@ print "supurl is $shortstuff\n";
 sub shorten {
     my $self = shift;
     my %args = @_;
-    if (!defined $args{URL}) {
+    if ( !defined $args{URL} ) {
         croak("URL is required.\n");
         return -1;
     }
-    $self->{response} = $self->{browser}->post($self->{BASE} . '/shorten', [
-        'version' => '1.0',
-        'longUrl' => $args{URL},
-        'login' => $self->{USER},
-        'apiKey' => $self->{APIKEY},
-    ]);
-    my $response_obj = $self->{json}->jsonToObj($self->{response}->content);
-    $self->{response}->is_success || die 'Failed to get su.pr link: ' . $self->{response}->status_line;
+    $self->{response} = $self->{browser}->post(
+        $self->{BASE} . '/shorten',
+        [
+            'version' => '1.0',
+            'longUrl' => $args{URL},
+            'login'   => $self->{USER},
+            'apiKey'  => $self->{APIKEY},
+        ]
+    );
+    my $response_obj = $self->{json}->jsonToObj( $self->{response}->content );
+    $self->{response}->is_success
+      || die 'Failed to get su.pr link: ' . $self->{response}->status_line;
     if ( $response_obj->{statusCode} eq 'ERROR' ) {
-	$self->{is_error} = 1;
-	$self->{error_message} = $response_obj->{errorMessage};
-	return undef;
+        $self->{is_error}      = 1;
+        $self->{error_message} = $response_obj->{errorMessage};
+        return undef;
     }
-    $self->{suprurl} = $response_obj->{results}->{$args{URL}}->{shortUrl};
+    $self->{suprurl} = $response_obj->{results}->{ $args{URL} }->{shortUrl};
     return $self->{suprurl} if ( $response_obj->{errorCode} == 0 );
 }
 
@@ -213,28 +231,33 @@ sub shorten {
 Expands a shortened su.pr URL to the original long URL.
 
 =cut
+
 sub expand {
     my $self = shift;
     my %args = @_;
-    if (!defined $args{URL}) {
+    if ( !defined $args{URL} ) {
         croak("URL is required.\n");
         return -1;
     }
-    my @foo = split(/\//, $args{URL});
-    $self->{response} = $self->{browser}->get($self->{BASE} . '/expand', [
-        'version' => '1.0',
-        'shortUrl' => $args{URL},
-        'login' => $self->{USER},
-        'apiKey' => $self->{APIKEY},
-    ]);
-    my $response_obj = $self->{json}->jsonToObj($self->{response}->content);
-    $self->{response}->is_success || die 'Failed to get su.pr link: ' . $self->{response}->status_line;
+    my @foo = split( /\//, $args{URL} );
+    $self->{response} = $self->{browser}->get(
+        $self->{BASE} . '/expand',
+        [
+            'version'  => '1.0',
+            'shortUrl' => $args{URL},
+            'login'    => $self->{USER},
+            'apiKey'   => $self->{APIKEY},
+        ]
+    );
+    my $response_obj = $self->{json}->jsonToObj( $self->{response}->content );
+    $self->{response}->is_success
+      || die 'Failed to get su.pr link: ' . $self->{response}->status_line;
     if ( $response_obj->{statusCode} eq 'ERROR' ) {
-	$self->{is_error} = 1;
-	$self->{error_message} = $response_obj->{errorMessage};
-	return undef;
+        $self->{is_error}      = 1;
+        $self->{error_message} = $response_obj->{errorMessage};
+        return undef;
     }
-    $self->{longurl} = $response_obj->{results}->{$foo[3]}->{longUrl};
+    $self->{longurl} = $response_obj->{results}->{ $foo[3] }->{longUrl};
     return $self->{longurl} if ( $response_obj->{errorCode} == 0 );
 }
 
@@ -272,27 +295,30 @@ print "suprmsg is " . $suprpost->{suprmsg} . "\n";
 
 =cut
 
-
 sub post {
     my $self = shift;
     my %args = @_;
-    if (!defined $args{msg}) {
+    if ( !defined $args{msg} ) {
         croak("msg is required.\n");
         return -1;
     }
-    $self->{response} = $self->{browser}->post($self->{BASE} . '/post', [
-        'version' => '1.0',
-        'msg' => $args{msg},
-        'login' => $self->{USER},
-        'apiKey' => $self->{APIKEY},
-		$args{services} ? ( 'services[]' => $args{services} ) : (),
-    ]);
-    my $response_obj = $self->{json}->jsonToObj($self->{response}->content);
-    $self->{response}->is_success || die 'Failed to get su.pr msg: ' . $self->{response}->status_line;
+    $self->{response} = $self->{browser}->post(
+        $self->{BASE} . '/post',
+        [
+            'version' => '1.0',
+            'msg'     => $args{msg},
+            'login'   => $self->{USER},
+            'apiKey'  => $self->{APIKEY},
+            $args{services} ? ( 'services[]' => $args{services} ) : (),
+        ]
+    );
+    my $response_obj = $self->{json}->jsonToObj( $self->{response}->content );
+    $self->{response}->is_success
+      || die 'Failed to get su.pr msg: ' . $self->{response}->status_line;
     if ( $response_obj->{statusCode} eq 'ERROR' ) {
-	$self->{is_error} = 1;
-	$self->{error_message} = $response_obj->{errorMessage};
-	return undef;
+        $self->{is_error}      = 1;
+        $self->{error_message} = $response_obj->{errorMessage};
+        return undef;
     }
     $self->{suprmsg} = $response_obj->{results}->{shortMsg};
     return $self->{suprmsg} if ( $response_obj->{errorCode} == 0 );
@@ -303,13 +329,16 @@ sub post {
 Gets the module version number
 
 =cut
+
 sub version {
     my $self = shift;
-    my($version) = shift;# not sure why $version isn't being set. need to look at it
-    warn "Version $version is later then $WWW::Shorten::Supr::VERSION. It may not be supported" if (defined ($version) && ($version > $WWW::Shorten::Supr::VERSION));
+    my ($version) =
+      shift;    # not sure why $version isn't being set. need to look at it
+    warn
+"Version $version is later then $WWW::Shorten::Supr::VERSION. It may not be supported"
+      if ( defined($version) && ( $version > $WWW::Shorten::Supr::VERSION ) );
     return $WWW::Shorten::Supr::VERSION;
-}#version
-
+}    #version
 
 =head1 AUTHOR
 
@@ -401,4 +430,4 @@ L<perl>, L<WWW::Shorten>, L<http://su.pr>.
 
 =cut
 
-1; # End of WWW::Shorten::Supr
+1;    # End of WWW::Shorten::Supr

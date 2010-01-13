@@ -29,7 +29,7 @@ use strict;
 use warnings;
 
 use base qw( WWW::Shorten::generic Exporter );
-our @EXPORT = qw(makeashorterlink makealongerlink);
+our @EXPORT  = qw(makeashorterlink makealongerlink);
 our $VERSION = '1.91';
 
 use Carp;
@@ -47,14 +47,14 @@ for every submission.
 
 =cut
 
-sub makeashorterlink ($)
-{
-    my $url = shift or croak 'No URL passed to makeashorterlink';
-    my $ua = __PACKAGE__->ua();
+sub makeashorterlink ($) {
+    my $url   = shift or croak 'No URL passed to makeashorterlink';
+    my $ua    = __PACKAGE__->ua();
     my $shorl = 'http://shorl.com/create.php';
-    my $resp = $ua->post($shorl, [ url => $url ]);
+    my $resp  = $ua->post( $shorl, [ url => $url ] );
     return unless $resp->is_success;
-    if ($resp->content =~ m!
+    if (
+        $resp->content =~ m!
 	\QShorl:\E
 	\s+
 	<a \s+ href="http://shorl.com/\w+"\s+rel="nofollow">
@@ -65,8 +65,10 @@ sub makeashorterlink ($)
 	\QPassword:\E
 	\s+
 	(\w+)
-	!x) {
-	return wantarray ? ($1, $2) : $1;
+	!x
+      )
+    {
+        return wantarray ? ( $1, $2 ) : $1;
     }
     return;
 }
@@ -81,14 +83,13 @@ If anything goes wrong, then either function will return C<undef>.
 
 =cut
 
-sub makealongerlink ($)
-{
-    my $shorl_url = shift 
-        or croak 'No Shorl key / URL passed to makealongerlink';
+sub makealongerlink ($) {
+    my $shorl_url = shift
+      or croak 'No Shorl key / URL passed to makealongerlink';
     my $ua = __PACKAGE__->ua();
 
     $shorl_url = "http://shorl.com/$shorl_url"
-    unless $shorl_url =~ m!^http://!i;
+      unless $shorl_url =~ m!^http://!i;
 
     my $resp = $ua->get($shorl_url);
 
