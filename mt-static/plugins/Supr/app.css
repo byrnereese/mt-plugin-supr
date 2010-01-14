@@ -1,5 +1,62 @@
-#su_twitter-field {
+#urls-field { 
+  font-size: 10px;
+  color: #333;
+  margin-top: -13px;
+}
+#urls-field .field-content {
+  margin: 0;
+} 
+#urls-field .field-header { 
+  display: none; 
+}
+#urls-field .field-content a {
+  text-decoration: none;
+  color: #333;
+}
+#urls-field .field-content ul,
+#urls-field .field-content li {
+  padding: 0; margin: 0;
+}
+#urls-field .field-content label {
+  width: 50px;
+  display: block;
+  text-align:right;
+  float:left;
+  padding-right: 5px;
+}
+#urls-field .field-content a.copy {
+  margin-left: 3px;
+}
+#urls-field .field-content span {
+  float:left;
+  display: block;
+}
+
+#su_twitter-field.already-posted { 
+  color: #999;
+}
+#su_twitter-field.already-posted textarea {
+  color: #999;
+  border: 1px solid #999;
+}
+#su_twitter-field .posted {
   position: relative;
+  display: none;
+}
+#su_twitter-field .post span {
+  padding-right: 10px;
+}
+#su_twitter-field.already-posted .post {
+  display: none;
+}
+#su_twitter-field.already-posted .posted {
+  display: block;
+}
+#su_twitter-field .posted a {
+  display: block;
+  position: absolute;
+  right: 0;
+  top: 0;
 }
 #su_twitter-field .field-header {
   position: relative;
@@ -14,6 +71,7 @@
 }
 #su_twitter-field .field-content textarea {
   width: 100%;
+  margin-bottom: 2px;
 }
 #su_twitter-field .char-counter {
   position: absolute;
