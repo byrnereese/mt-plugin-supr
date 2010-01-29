@@ -80,13 +80,6 @@
   color: #CCC;
   font-size: 12px;
 }
-#su_twitter-field .char-counter input {
-  border: 0;
-  text-align: right;
-  font-size: 12px;
-  color: #CCC;
-  padding: 0 0 2px 0;
-}
 #su_twitter-field .help {
   font-size: 11px;
   color: #999;

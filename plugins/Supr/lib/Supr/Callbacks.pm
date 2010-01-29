@@ -81,9 +81,7 @@ sub entry_post_save {
 
     my $url   = $entry->permalink;
     if ($q->param('supr_repost')) {
-	MT->log("Tweet text BEFORE: $tweet_text");
 	$tweet_text = _str_replace($entry->supr_url,$url,$tweet_text);
-	MT->log("Tweet text AFTER: $tweet_text");
     } else {
 	$tweet_text .= ' ' . $url;
     }
@@ -95,7 +93,6 @@ sub entry_post_save {
     my ($supr_url,$supr_msg);
     if (@services) {
         # one more services was requested so use 'post' API method
-	MT->log("Posting $tweet_text");
         $supr_msg = $supr->post( msg => $tweet_text, services => \@services );
         $supr_url = extract_suprurl($supr_msg);
     }
@@ -197,7 +194,6 @@ sub edit_entry_param {
     }
     my $innerHTML = <<HTML;
 <script type="text/javascript">
-<!-- Begin
 function countChars() {
   \$('.supr-controls .char-counter span').html(140 - \$('#su_twitter').val().length);
 }
@@ -218,15 +214,13 @@ function countChars() {
           return false;
 	});
     }, { swfpath: "<mt:StaticWebPath>plugins/Supr/jquery.clipboard.swf", debug: true } );
-// End -->
 </script>
     <textarea name="su_twitter" id="su_twitter" rows="3" cols="60" $supr_dis
       onKeyDown="countChars()" onKeyUp="countChars()">$supr_text</textarea>
-    
+    <div class="char-counter">
+      <span>140</span> characters left
+    </div>
     <div class="supr-controls">
-      <div class="char-counter">
-        <span>140</span> characters left
-      </div>
       <div class="post pkg">
         <span>Post to:</span>
         <label class="twitter" for="supr-this"><input type="checkbox" name="twitter-this" $twitter_checked id="twitter-this" value="1"  /> Twitter</label>
@@ -280,8 +274,6 @@ sub _str_replace {
     my $with_this  = shift; 
     my $string   = shift;
 
-    MT->log("Replacing $replace_this with $with_this");
-    
     my $length = length($string);
     my $target = length($replace_this);
     
