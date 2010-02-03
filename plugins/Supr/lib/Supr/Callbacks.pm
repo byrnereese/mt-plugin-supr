@@ -160,6 +160,20 @@ sub edit_entry_param {
     my $config        = $plugin->get_config_hash( 'blog:' . $blog->id );
     return if !$config->{supr_enable};
 
+    use Data::Dumper;
+    MT->log( Dumper($tmpl->param('field_loop')) );
+
+    push @{$tmpl->param('field_loop')}, {
+        'field_id' => 'su_twitter',
+        'lock_field' => 0, 
+        'field_name' => 'su_twitter', 
+        'show_field' => $tmpl->param("disp_prefs_show_su_twitter") ? 1 : 0, 
+        'field_label' => 'Stumble Upon'
+    };
+
+    $tmpl->param('field_loop', sort { $a->{field_label} <=> $b->{field_label}  } @{$tmpl->param('field_loop')});
+
+
     my ($entry,$posted_to,$posted_on,$supr_text);
     my ($twitter_checked,$fb_checked);
     if ($param->{id}) {
@@ -169,28 +183,28 @@ sub edit_entry_param {
 	$supr_text = $entry->supr_text();
     }
     if ($entry && $posted_to) {
-	$twitter_checked = "checked" if $entry->supr_posted_to =~ /twitter/;
-	$fb_checked      = "checked" if $entry->supr_posted_to =~ /facebook/;
+        $twitter_checked = "checked" if $entry->supr_posted_to =~ /twitter/;
+        $fb_checked      = "checked" if $entry->supr_posted_to =~ /facebook/;
     } else {
-	$twitter_checked = "checked" if $config->{twitter_default};
-	$fb_checked      = "checked" if $config->{fb_default};
+        $twitter_checked = "checked" if $config->{twitter_default};
+        $fb_checked      = "checked" if $config->{fb_default};
     }
     my $supr_dis        = ( $supr_text ne '' ? 'disabled="disabled"' : '' );
 
     my $kw_field = $tmpl->getElementById('keywords')
-      or return $app->error('cannot get the keywords block');
+        or return $app->error('cannot get the keywords block');
     my $su_field = $tmpl->createElement(
         'app:setting',
         {
             id    => 'su_twitter',
-	    class => $supr_text ne '' ? "already-posted" : "",
+            class => ($supr_text ne '' ? "already-posted" : "") . ($tmpl->param("disp_prefs_show_su_twitter") ? '' : ' hidden'),
             label => $app->translate('Post on Twitter & Facebook with Su.pr'),
         }
     ) or return $app->error('cannot create the su_twitter element');
     my $postedHTML;
     if ($posted_to) {
-	$postedHTML = "Posted to $posted_to " . ($posted_on =~ /ago/ ? "" : " on ") 
-	    . $posted_on;
+        $postedHTML = "Posted to $posted_to " . ($posted_on =~ /ago/ ? "" : " on ") 
+            . $posted_on;
     }
     my $innerHTML = <<HTML;
 <script type="text/javascript">
