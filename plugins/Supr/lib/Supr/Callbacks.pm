@@ -160,9 +160,6 @@ sub edit_entry_param {
     my $config        = $plugin->get_config_hash( 'blog:' . $blog->id );
     return if !$config->{supr_enable};
 
-    use Data::Dumper;
-    MT->log( Dumper($tmpl->param('field_loop')) );
-
     push @{$tmpl->param('field_loop')}, {
         'field_id' => 'su_twitter',
         'lock_field' => 0, 
@@ -170,9 +167,7 @@ sub edit_entry_param {
         'show_field' => $tmpl->param("disp_prefs_show_su_twitter") ? 1 : 0, 
         'field_label' => 'Stumble Upon'
     };
-
     $tmpl->param('field_loop', sort { $a->{field_label} <=> $b->{field_label}  } @{$tmpl->param('field_loop')});
-
 
     my ($entry,$posted_to,$posted_on,$supr_text);
     my ($twitter_checked,$fb_checked);
